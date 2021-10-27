@@ -99,6 +99,8 @@ int main() {
   load_in_memory(RODATA_BIN, vm_mem + RODATA_OFFSET);
   load_in_memory(DATA_BIN, vm_mem + DATA_OFFSET);
 
+#define VM_MEMORY_POINTER(OFFSET) ((long)vm_mem + (OFFSET)-VM_INITIAL_GUEST_PHYS_ADDR);
+
   struct kvm_sregs sregs;
   struct kvm_regs regs;
 
@@ -117,6 +119,8 @@ int main() {
 
   // run
   while (1) {
+    ioctl(vcpu_fd, KVM_SET_SREGS, &sregs);
+    ioctl(vcpu_fd, KVM_SET_REGS, &regs);
     ioctl(vcpu_fd, KVM_RUN, NULL);
     // load regs after every step
     ioctl(vcpu_fd, KVM_GET_SREGS, &sregs);
@@ -137,6 +141,32 @@ int main() {
             run->io.port == 0x3f8 &&
             run->io.count == 1) {
           putchar(*(((char*)run) + run->io.data_offset));
+        } else if (run->io.direction == KVM_EXIT_IO_OUT &&
+                   run->io.size == 4 &&
+                   run->io.port == 122 &&
+                   run->io.count == 1) {
+          int stack_offset = *((int*)(((char*)run) + run->io.data_offset));
+          int fd = *(int*)VM_MEMORY_POINTER(stack_offset);
+
+          int buf_offset = *(int*)VM_MEMORY_POINTER(stack_offset + 4);
+          char* buf = (char*)VM_MEMORY_POINTER(buf_offset);
+
+          unsigned int size = *(unsigned int*)VM_MEMORY_POINTER(stack_offset + 8);
+          int result = write(fd, buf, size);
+          regs.rax = result;
+        } else if (run->io.direction == KVM_EXIT_IO_OUT &&
+                   run->io.size == 4 &&
+                   run->io.port == 123 &&
+                   run->io.count == 1) {
+          errx(1, "open not implemented");
+        } else if (run->io.direction == KVM_EXIT_IO_OUT &&
+                   run->io.size == 4 &&
+                   run->io.port == 124 &&
+                   run->io.count == 1) {
+          int stack_offset = *((int*)(((char*)run) + run->io.data_offset));
+          int status = *(int*)VM_MEMORY_POINTER(stack_offset);
+          printf("exiting status: %d\n", status);
+          return 0;
         } else {
           errx(1, "unhandled KVM_EXIT_IO %d", run->io.port);
         }

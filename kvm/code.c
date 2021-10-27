@@ -8,8 +8,11 @@ int puts(const char* string) {
   putchar('\n');
   return 0;
 }
-int entry() {
-  // load_idt();
+void entry() {
   puts("hello");
-  return 0;
+  int fd = open("./tuturu.txt", O_RDWR);
+  if (fd == -1) {
+    exit(1);
+  }
+  write(fd, "hello twice 3\n", 15);
 }
