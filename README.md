@@ -34,7 +34,8 @@ Se a mensagem `KVM_EXIT_HLT` apareceu, então está tudo pronto para você come�
 
 ## Tarefa
 
-- [ ] Implementar IO básico lendo e escrevendo em um arquivo
+Crie um fork do repositório.
+
+E implementar uma operação de `open` de um arquivo similar como foi implementado o write
   - [ ] https://man7.org/linux/man-pages/man2/open.2.html
-  - [ ] https://man7.org/linux/man-pages/man2/read.2.html
-  - [ ] https://man7.org/linux/man-pages/man2/write.2.html
+
