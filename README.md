@@ -31,3 +31,10 @@ make run
 ```
 
 Se a mensagem `KVM_EXIT_HLT` apareceu, então está tudo pronto para você começar a brincar.
+
+## Tarefa
+
+- [ ] Implementar IO básico lendo e escrevendo em um arquivo
+  - [ ] https://man7.org/linux/man-pages/man2/open.2.html
+  - [ ] https://man7.org/linux/man-pages/man2/read.2.html
+  - [ ] https://man7.org/linux/man-pages/man2/write.2.html
