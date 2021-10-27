@@ -36,6 +36,6 @@ Se a mensagem `KVM_EXIT_HLT` apareceu, então está tudo pronto para você come�
 
 Crie um fork do repositório.
 
-E implementar uma operação de `open` de um arquivo similar como foi implementado o write
-  - [ ] https://man7.org/linux/man-pages/man2/open.2.html
+E implemente a operação de `open` em um arquivo. https://man7.org/linux/man-pages/man2/open.2.html
 
+Similar como o `write` foi implementado.
