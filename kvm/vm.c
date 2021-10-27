@@ -16,6 +16,10 @@
 #define VM_INITIAL_GUEST_PHYS_ADDR (0x1000)
 
 #define CODE_BIN ("./code.bin")
+#define RODATA_BIN ("./rodata.bin")
+#define RODATA_OFFSET (0x1000)
+#define DATA_BIN ("./data.bin")
+#define DATA_OFFSET (0x2000)
 
 int setup_kvm() {
   // open kvm
@@ -64,24 +68,24 @@ void* allocate_vm_memory(int vm_fd, size_t size) {
   return mem;
 }
 
-void load_program_code(void* mem) {
-  int code_bin_fd = open(CODE_BIN, O_RDONLY);
-  if (code_bin_fd == -1) {
+void load_in_memory(const char* file, void* mem) {
+  int bin_fd = open(file, O_RDONLY);
+  if (bin_fd == -1) {
     // TODO: errno handling here
-    errx(1, "open %s", CODE_BIN);
+    errx(1, "open %s", file);
   }
 
   struct stat stat_result;
-  fstat(code_bin_fd, &stat_result);
+  fstat(bin_fd, &stat_result);
 
   size_t size = stat_result.st_size;
-  void* mapped = mmap(0, size, PROT_READ, MAP_PRIVATE, code_bin_fd, 0);
+  void* mapped = mmap(0, size, PROT_READ, MAP_PRIVATE, bin_fd, 0);
 
   // copy the data from the file to the memory
   memcpy(mem, mapped, size);
 
   munmap(mapped, size);
-  close(code_bin_fd);
+  close(bin_fd);
 }
 
 int main() {
@@ -91,7 +95,9 @@ int main() {
 
   struct kvm_run* run = allocate_kvm_run(kvm, vcpu_fd);
   void* vm_mem = allocate_vm_memory(vm_fd, VM_MEMORY);
-  load_program_code(vm_mem);
+  load_in_memory(CODE_BIN, vm_mem);
+  load_in_memory(RODATA_BIN, vm_mem + RODATA_OFFSET);
+  load_in_memory(DATA_BIN, vm_mem + DATA_OFFSET);
 
   struct kvm_sregs sregs;
   struct kvm_regs regs;
@@ -125,10 +131,23 @@ int main() {
         } else {
           printf("read\n");
         }
+      case KVM_EXIT_IO:
+        if (run->io.direction == KVM_EXIT_IO_OUT &&
+            run->io.size == 1 &&
+            run->io.port == 0x3f8 &&
+            run->io.count == 1) {
+          putchar(*(((char*)run) + run->io.data_offset));
+        } else {
+          errx(1, "unhandled KVM_EXIT_IO %d", run->io.port);
+        }
+        break;
       case KVM_EXIT_HLT:
         puts("KVM_EXIT_HLT");
         return 0;
+      default:
+        printf("some other exit %u\n", run->exit_reason);
         /* Handle exit */
     }
   }
+  return 1;
 }
