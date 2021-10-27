@@ -39,3 +39,9 @@ Crie um fork do repositório.
 E implemente a operação de `open` em um arquivo. https://man7.org/linux/man-pages/man2/open.2.html
 
 Similar como o `write` foi implementado.
+
+## Adicional
+
+Implemente a operação de `read` em um arquivo.
+
+https://man7.org/linux/man-pages/man2/read.2.html
